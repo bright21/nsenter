@@ -74,6 +74,58 @@ shell will be invoked instead.
     # list the root filesystem
     docker-enter my_awesome_container ls -la
 
+
+## Docker toolbox usage for OS X or Windows user
+
+
+### SSH to the Docker Toolbox virtual machine
+
+    docker-machine ssh default
+
+
+### Install nsenter, docker-enter, and importenv into the VM
+
+    docker run --rm -v /usr/local/bin:/target jpetazzo/nsenter
+
+You can also install `nsenter` to another folder. In that case, you will
+need to specify the full path of `nsenter` to run it.
+
+    docker run --rm -v /tmp:/target jpetazzo/nsenter
+
+
+### Using nsenter
+
+List running containers:
+
+    docker ps
+
+Identify the ID of the container that you want to get into; and retrieve
+its associated PID:
+
+    PID=$(docker inspect --format {{.State.Pid}} 08a2a025e05f)
+
+Enter the container:
+
+    sudo nsenter --target $PID --mount --uts --ipc --net --pid
+
+Remember to run those commands in the Docker Toolbox virtual machine; not
+in your host environment.
+
+
+### Using docker-enter
+
+With `docker-enter`, you don't need to lookup the container PID.
+
+You can get a shell inside the container:
+
+    docker-enter 08a2a025e05f
+
+Or run commands directly:
+
+    docker-enter 08a2a025e05f ls /var/log
+    docker-enter 08a2a025e05f df -h
+
+
 ## docker-enter with boot2docker
 
 If you are using boot2docker, you can use the function below, to:
@@ -91,6 +143,7 @@ docker-enter() {
 
 You can use it directly from your host (OS X/Windows), no need to ssh into boot2docker.
 
+
 ## Caveats
 
 - This only works on Intel 64 bits platforms. Arguably, this is the
@@ -101,7 +154,7 @@ You can use it directly from your host (OS X/Windows), no need to ssh into boot2
   container (yet).
 
 
-[container namespaces]: http://blog.dotcloud.com/under-the-hood-linux-kernels-on-dotcloud-part
+[container namespaces]: https://gun.io/blog/PaaS-under-the-hood-episode-1-kernel-namespaces/
 [enter into a Docker container]: http://jpetazzo.github.io/2014/03/23/lxc-attach-nsinit-nsenter-docker-0-9/
 [Debugging a Docker container]: http://blog.loof.fr/2014/06/debugging-docker-container.html
 [Nicolas De Loof]: https://twitter.com/ndeloof
